@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+*.wav
+imgui.ini
+.DS_Store
+
+/build
