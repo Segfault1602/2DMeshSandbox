@@ -34,5 +34,6 @@
 *.wav
 imgui.ini
 .DS_Store
+*.html
 
 /build

@@ -3,6 +3,18 @@ Physical modeling of circular membrane using 2D waveguides.
 
 ## Building
 
+To clone the repository, run the following command:
+
+```bash
+git clone https://github.com/Segfault1602/2DMeshSandbox.git --recurse-submodules
+```
+
+If you forgot to clone the submodules, you can run the following command to fetch them:
+
+```bash
+git submodule update --init --recursive
+```
+
 This project uses CMake to generate the build files. To build the project, run the following commands:
 
 ```bash

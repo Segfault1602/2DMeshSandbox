@@ -11,13 +11,13 @@
 #include <numbers>
 #include <sndfile.h>
 
-constexpr float kSampleRate = 11025;
+constexpr float kSampleRate = 12000;
 
 constexpr float kDensity = 0.262;
-constexpr float kRadius = 0.10; // radius of the membrane
+constexpr float kRadius = 0.32; // radius of the membrane
 
 constexpr float kTension = 3325.f;
-constexpr float kDecay = 45.f;
+constexpr float kDecay = 25.f;
 
 constexpr float kDurationSeconds = 1.0f;
 constexpr size_t kOutputSize = kSampleRate * kDurationSeconds;
@@ -62,7 +62,7 @@ int main()
     info.is_solid_boundary = true;
     info.fundamental_frequency = f0_hz;
 
-    info.use_nonlinear_allpass = true;
+    info.use_nonlinear_allpass = false;
     info.nonlinear_allpass_coeffs[0] = 0.5f;
     info.nonlinear_allpass_coeffs[1] = 0.1f;
 
@@ -74,8 +74,6 @@ int main()
 
     mesh.set_input(0.25, 0.5);
     mesh.set_output(0.5, 0.5);
-
-    // mesh.print_junction_types();
 
     float T = 1.f / kSampleRate;
     float t0 = 1.f / f0_hz;
@@ -97,23 +95,24 @@ int main()
     std::vector<float> out_buffer(kOutputSize, 0.0f);
     out_buffer.reserve(kOutputSize);
 
-    // constexpr const char kImpulseFile[] = "roll_fast.wav";
-    // SF_INFO sf_info{0};
-    // SNDFILE* file = sf_open(kImpulseFile, SFM_READ, &sf_info);
-    // if (!file)
-    // {
-    //     std::cerr << "Failed to open impulse file" << std::endl;
-    //     return 0;
-    // }
+#if 0
+    constexpr const char kImpulseFile[] = "roll_fast.wav";
+    SF_INFO sf_info{0};
+    SNDFILE* file = sf_open(kImpulseFile, SFM_READ, &sf_info);
+    if (!file)
+    {
+        std::cerr << "Failed to open impulse file" << std::endl;
+        return 0;
+    }
 
-    // std::vector<float> impulse(sf_info.frames);
-    // sf_readf_float(file, impulse.data(), sf_info.frames);
-    // sf_close(file);
+    std::vector<float> impulse(sf_info.frames);
+    sf_readf_float(file, impulse.data(), sf_info.frames);
+    sf_close(file);
+#endif
 
     auto start = std::chrono::high_resolution_clock::now();
 
     auto impulse = raised_cosine(100, kSampleRate);
-    // std::vector<float> impulse = {2.70733f, 0.f, 0.f, 0.f, 0.f, 0.f};
 
     float progress = 0.f;
 
@@ -125,17 +124,9 @@ int main()
         if (i < impulse.size())
         {
             input = -impulse[i];
-            // std::cout << input << std::endl;
         }
         mesh.tick(input);
         out_buffer[i] = listen.tick();
-
-        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        // out_buffer[i] = mesh.get_rimguide(0)->new_delay;
-        // out_buffer[i] = mesh.get_rimguide(10)->noise_out_;
-
-        // mesh.print_junction_pressure();
-        // std::cout << std::endl;
 
         float new_progress = static_cast<float>(i) / static_cast<float>(kOutputSize);
         if (new_progress - progress > 0.01f)
@@ -169,8 +160,6 @@ int main()
     sf_writef_float(out_file, out_buffer.data(), kOutputSize);
     sf_write_sync(out_file);
     sf_close(out_file);
-
-    // writer.close();
 
     return 0;
 }

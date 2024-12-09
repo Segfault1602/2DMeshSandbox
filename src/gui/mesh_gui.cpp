@@ -324,7 +324,7 @@ void draw_spectrogram()
         ImGui::SliderFloat("Min", &g_min_dB, -100, g_max_dB);
         ImGui::EndPopup();
     }
-    ImGui::Checkbox("Show Current", &show_previous_spectrogram);
+    ImGui::Checkbox("Show Previous", &show_previous_spectrogram);
 }
 
 void draw_waveform()
@@ -494,17 +494,17 @@ void draw_spectrum()
     ImGui::Checkbox("Show Theoretical Modes", &show_theoretical_modes);
 
     const float h = ImGui::GetWindowSize()[1];
+    ImPlot::PushStyleColor(ImPlotCol_PlotBg, IM_COL32(175, 175, 175, 255));
+    ImPlot::PushStyleColor(ImPlotCol_AxisGrid, IM_COL32(5, 5, 5, 255));
     if (ImPlot::BeginPlot("##Spectrum", ImVec2(-1, 0.8f * h), ImPlotFlags_NoLegend))
     {
         ImPlot::SetupAxes("Freq", "Db");
-        ImPlot::PushStyleColor(ImPlotCol_PlotBg, IM_COL32(75, 75, 75, 255));
         // ImPlot::SetupAxis(ImAxis_Y1, NULL, ImPlotAxisFlags_AutoFit);
         ImPlot::PlotLine("Spectrum", freq.data(), spectrum.data(), spectrum.size() / 2);
-        ImPlot::PopStyleColor();
 
         if (show_previous_spectrum)
         {
-            ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(75, 35, 0, 255));
+            ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(120, 35, 0, 255));
 
             ImPlot::PlotLine("Spectrum2", freq.data(), spectrum_2.data(), spectrum_2.size() / 2);
             ImPlot::PopStyleColor();
@@ -523,4 +523,5 @@ void draw_spectrum()
 
         ImPlot::EndPlot();
     }
+    ImPlot::PopStyleColor(2);
 }

@@ -87,6 +87,10 @@ set(BUILD_REGTEST OFF CACHE BOOL "Don't build libsndfile regtest!")
 set(BUILD_PROGRAMS OFF CACHE BOOL "Don't build libsndfile programs!" FORCE)
 set(ENABLE_EXTERNAL_LIBS OFF CACHE BOOL "Disable external libs support!" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "Disable libsndfile tests!" FORCE)
+set(ENABLE_MPEG OFF CACHE BOOL "Disable MPEG support!" FORCE)
+set(ENABLE_CPACK OFF CACHE BOOL "Disable CPACK!" FORCE)
+set(ENABLE_PACKAGE_CONFIG OFF CACHE BOOL "Disable package config!" FORCE)
+set(INSTALL_PKGCONFIG_MODULE OFF CACHE BOOL "Disable pkgconfig module!" FORCE)
 
 FetchContent_MakeAvailable(libsndfile)
 

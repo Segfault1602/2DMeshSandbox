@@ -154,6 +154,14 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     ImGui::Text("Sample Rate:");
     ImGui::SameLine(kColOffset);
     config_changed |= ImGui::InputInt("##sample_rate", &sample_rate_);
+    if (sample_rate_ > 48000)
+    {
+        sample_rate_ = 48000;
+    }
+    else if (sample_rate_ < 8000)
+    {
+        sample_rate_ = 8000;
+    }
 
     ImGui::Text("Radius (cm):");
     ImGui::SameLine(kColOffset);
@@ -170,7 +178,7 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     ImGui::SameLine();
     ImGui::Text("Cutoff:");
     ImGui::SameLine(kColOffset);
-    config_changed |= ImGui::DragFloat("##cutoff", &cutoff_freq_hz_, 20, 2000);
+    config_changed |= ImGui::SliderFloat("##cutoff", &cutoff_freq_hz_, 20, 2000);
     ImGui::EndDisabled();
 
     ImGui::Text("Density:");

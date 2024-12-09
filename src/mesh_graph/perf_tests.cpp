@@ -235,7 +235,7 @@ TEST_CASE("TriMesh single thread- BigO")
                 {
                     input = -impulse[i];
                 }
-                float out = mesh.tick(input);
+                float out = mesh.tick_st(input);
                 ankerl::nanobench::doNotOptimizeAway(out);
             }
         });

@@ -15,6 +15,18 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb"
+        },
+        {
+            "name": "Trimesh Test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/mesh_graph/trimesh_test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
         }
 
     ]
