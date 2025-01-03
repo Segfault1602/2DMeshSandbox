@@ -197,10 +197,6 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     ImGui::SameLine(kColOffset);
     config_changed |= ImGui::SliderFloat2("##input_pos", &input_pos_.x, 0.f, 1.f);
 
-    ImGui::Text("Output Pos:");
-    ImGui::SameLine(kColOffset);
-    config_changed |= ImGui::SliderFloat2("##output_pos", &output_pos_.x, 0.f, 1.f);
-
     ImGui::Text("Clamped bound.:");
     ImGui::SameLine(kColOffset);
     config_changed |= ImGui::Checkbox("##solid_boundary", &is_solid_boundary_);
@@ -259,6 +255,13 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     ImGui::SameLine(kColOffset);
     ImGui::Combo("##listener_type", reinterpret_cast<int*>(&listener_type_), listener_types.data(),
                  listener_types.size());
+
+    if (listener_type_ == ListenerType::POINT)
+    {
+        ImGui::Text("Listener Pos:");
+        ImGui::SameLine(kColOffset);
+        config_changed |= ImGui::SliderFloat2("##output_pos", &output_pos_.x, 0.f, 1.f);
+    }
 
     ImGui::Checkbox("Use DC Blocker", &use_dc_blocker_);
     if (use_dc_blocker_)
@@ -562,6 +565,7 @@ void CircularMeshManager::render_async(float render_time_seconds, RenderComplete
 
     if (use_time_varying_allpass_)
     {
+        auto phase_offset = allpass_phase_offset_;
         auto rimguide_count = mesh->get_rimguide_count();
         for (size_t i = 0; i < rimguide_count; i++)
         {
@@ -578,7 +582,8 @@ void CircularMeshManager::render_async(float render_time_seconds, RenderComplete
             case TimeVaryingAllpassType::PHASE_OFFSET:
             {
                 modulator->setFrequency(allpass_mod_freq_);
-                modulator->addPhase(allpass_phase_offset_);
+                modulator->addPhase(phase_offset);
+                phase_offset += allpass_phase_offset_;
                 break;
             }
             case TimeVaryingAllpassType::RANDOM:
@@ -586,7 +591,6 @@ void CircularMeshManager::render_async(float render_time_seconds, RenderComplete
                 float random_freq = allpass_mod_freq_ * (1.f + rand_float() * allpass_random_freq_);
                 random_freq = std::max(0.f, random_freq);
                 modulator->setFrequency(random_freq);
-                modulator->addPhase(allpass_phase_offset_);
                 break;
             }
             case TimeVaryingAllpassType::RANDOM_FREQ_AND_AMP:
@@ -849,9 +853,13 @@ void CircularMeshManager::plot_mesh() const
         ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(255, 50, 50, 255));
         ImPlot::PlotScatter("##input", &input_pos.x, &input_pos.y, 1);
         ImPlot::PopStyleColor();
-        ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(50, 50, 255, 255));
-        ImPlot::PlotScatter("##output", &output_pos.x, &output_pos.y, 1);
-        ImPlot::PopStyleColor();
+
+        if (listener_type_ == ListenerType::POINT)
+        {
+            ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(50, 50, 255, 255));
+            ImPlot::PlotScatter("##output", &output_pos.x, &output_pos.y, 1);
+            ImPlot::PopStyleColor();
+        }
         ImPlot::PopStyleVar(2);
 
         if (plot_radius)
