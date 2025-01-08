@@ -5,6 +5,7 @@
 #include "nanobench.h"
 #include "rectilinear_mesh.h"
 #include "rimguide.h"
+#include "rimguide_utils.h"
 #include "trimesh.h"
 #include "wave_math.h"
 

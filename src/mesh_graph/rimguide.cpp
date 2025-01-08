@@ -19,14 +19,6 @@ constexpr float kPitchBendScaler = 100.f;
 
 } // namespace
 
-Vec2Df get_boundary_position(float radius, const Vec2Df& junction_pos)
-{
-    float dist_2_center = get_distance({0, 0}, junction_pos);
-    float x_unit = junction_pos.x / dist_2_center;
-    float y_unit = junction_pos.y / dist_2_center;
-    return {x_unit * radius, y_unit * radius};
-}
-
 Rimguide::Rimguide()
     : junction_(nullptr)
     , delay_(0)

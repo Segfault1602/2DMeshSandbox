@@ -53,24 +53,6 @@ class RectangularMeshManager : public MeshManager
     void render_async(float render_time_seconds, RenderCompleteCallback cb) override;
 
     /**
-     * @brief Gets the progress of the rendering.
-     * @return Progress as a float.
-     */
-    float get_progress() const override;
-
-    /**
-     * @brief Checks if rendering is in progress.
-     * @return True if rendering, false otherwise.
-     */
-    bool is_rendering() const override;
-
-    /**
-     * @brief Gets the runtime of the render.
-     * @return Render runtime in milliseconds.
-     */
-    float get_render_runtime() const override;
-
-    /**
      * @brief Plots the mesh.
      */
     void plot_mesh() const override;
@@ -95,13 +77,6 @@ class RectangularMeshManager : public MeshManager
     void update_mesh_object();
 
     /**
-     * @brief Worker function for asynchronous rendering.
-     * @param mesh Unique pointer to the mesh object.
-     * @param cb Callback function to be called upon render completion.
-     */
-    void render_async_worker(std::unique_ptr<Mesh2D>&& mesh, RenderCompleteCallback cb);
-
-    /**
      * @brief Updates the OpenGL mesh.
      */
     void update_gl_mesh();
@@ -110,21 +85,15 @@ class RectangularMeshManager : public MeshManager
 
     MeshType mesh_type_ = MeshType::RECTILINEAR_MESH; ///< Type of the mesh.
     std::unique_ptr<Mesh2D> mesh_{nullptr};           ///< Pointer to the mesh object.
-    Listener listener_;                               ///< Listener for events.
-    std::atomic_bool is_rendering_{false};            ///< Flag indicating if rendering is in progress.
-    std::atomic<float> progress_{0.f};                ///< Progress of the rendering.
-    std::atomic<float> render_runtime_{0.f};          ///< Runtime of the render in milliseconds.
 
     // Model parameters
-    int32_t sample_rate_ = 11025;         ///< Sample rate for the simulation.
-    float length_ = 0.32;                 ///< Length of the rectangular mesh.
-    float width_ = 0.32;                  ///< Width of the rectangular mesh.
-    float filter_pole_ = 0.02f;           ///< Pole for the filter.
+    float length_ = 0.64;                 ///< Length of the rectangular mesh.
+    float width_ = 0.64;                  ///< Width of the rectangular mesh.
+    float filter_pole_ = 0.6f;            ///< Pole for the filter.
     float density_ = 0.262;               ///< Density of the mesh material.
     int32_t tension_ = 3325.f;            ///< Tension of the mesh.
     float minimum_rimguide_delay_ = 1.5f; ///< Minimum delay for the rim guide.
     bool is_solid_boundary_ = true;       ///< Flag indicating if the boundary is solid.
-    float render_time_seconds_ = 1.f;     ///< Time in seconds for rendering.
     Vec2Df input_pos_ = {0.5f, 0.5f};     ///< Input position on the mesh.
     Vec2Df output_pos_ = {0.5f, 0.5f};    ///< Output position on the mesh.
 
@@ -140,14 +109,6 @@ class RectangularMeshManager : public MeshManager
     float max_length_ = 0.0f;         ///< Maximum length of the rectangular mesh.
     float max_width_ = 0.0f;          ///< Maximum width of the rectangular mesh.
     Vec2Di grid_size_ = {0, 0};       ///< Size of the grid.
-
-    // Excitation parameters
-    ExcitationType excitation_type_ = ExcitationType::RAISE_COSINE; ///< Type of excitation.
-    float excitation_frequency_ = 100.f;                            ///< Frequency of the excitation.
-    float excitation_amplitude_ = 1.f;                              ///< Amplitude of the excitation.
-    std::string excitation_filename_{""};
-
-    ListenerType listener_type_ = ListenerType::ALL; ///< Type of listener.
 
     enum class TimeVaryingAllpassType
     {
@@ -176,9 +137,6 @@ class RectangularMeshManager : public MeshManager
 
     bool use_nonlinear_allpass_ = false;             ///< Flag to use nonlinear allpass filter.
     float nonlinear_allpass_coeffs_[2] = {0.f, 0.f}; ///< Coefficients for nonlinear allpass filter.
-
-    bool use_dc_blocker_ = false;     ///< Flag to use DC blocker.
-    float dc_blocker_alpha_ = 0.995f; ///< Alpha value for DC blocker.
 
     bool use_extra_diffusion_filters_ = false;
     size_t diffusion_filter_count_ = 0;

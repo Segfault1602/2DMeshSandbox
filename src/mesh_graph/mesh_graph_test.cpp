@@ -2,6 +2,7 @@
 #include "gaussian.h"
 #include "rectilinear_mesh.h"
 #include "rimguide.h"
+#include "rimguide_utils.h"
 #include "wave_math.h"
 
 #include <array>
