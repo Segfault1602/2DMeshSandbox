@@ -51,12 +51,12 @@ TEST_CASE("TriMesh")
     const size_t kGridY = grid_size[1];
 
     RimguideInfo info{};
-    info.radius = kRadius;
     info.friction_coeff = -friction_coeff;
     info.friction_delay = friction_delay;
     info.wave_speed = c;
     info.sample_rate = kSampleRate;
     info.is_solid_boundary = true;
+    info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
     TriMesh mesh(kGridX, kGridY, sample_distance);
     auto mask = mesh.get_mask_for_radius(max_radius);
@@ -126,12 +126,12 @@ TEST_CASE("Rectangular mesh")
     const size_t kGridY = grid_size[1];
 
     RimguideInfo info{};
-    info.radius = kRadius;
     info.friction_coeff = -friction_coeff;
     info.friction_delay = friction_delay;
     info.wave_speed = c;
     info.sample_rate = kSampleRate;
     info.is_solid_boundary = true;
+    info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
     RectilinearMesh rect_mesh(kGridX, kGridY, sample_distance);
     auto mask = rect_mesh.get_mask_for_radius(max_radius);
@@ -208,12 +208,12 @@ TEST_CASE("TriMesh single thread- BigO")
         const size_t kGridY = grid_size[1];
 
         RimguideInfo info{};
-        info.radius = radius;
         info.friction_coeff = -friction_coeff;
         info.friction_delay = friction_delay;
         info.wave_speed = c;
         info.sample_rate = kSampleRate;
         info.is_solid_boundary = true;
+        info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
         TriMesh mesh(kGridX, kGridY, sample_distance);
         auto mask = mesh.get_mask_for_radius(max_radius);
@@ -269,12 +269,12 @@ TEST_CASE("TriMesh multi thread- BigO")
         const size_t kGridY = grid_size[1];
 
         RimguideInfo info{};
-        info.radius = radius;
         info.friction_coeff = -friction_coeff;
         info.friction_delay = friction_delay;
         info.wave_speed = c;
         info.sample_rate = kSampleRate;
         info.is_solid_boundary = true;
+        info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
         TriMesh mesh(kGridX, kGridY, sample_distance);
         auto mask = mesh.get_mask_for_radius(max_radius);

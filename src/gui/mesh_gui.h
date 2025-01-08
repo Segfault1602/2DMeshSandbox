@@ -5,6 +5,12 @@
 
 #include <glm/glm.hpp>
 
+enum class MeshShape : int
+{
+    Circle = 0,
+    Rectangle = 1,
+};
+
 /**
  * @class AudioManager
  * @brief Manages audio playback and processing.
@@ -16,6 +22,12 @@ class AudioManager;
  * @note This function should be called once before any other Mesh GUI functions.
  */
 void init_mesh_gui();
+
+/**
+ * @brief Changes the mesh shape.
+ * @param shape The new mesh shape.
+ */
+void change_mesh_shape(MeshShape shape);
 
 /**
  * @brief Draws the audio player interface.

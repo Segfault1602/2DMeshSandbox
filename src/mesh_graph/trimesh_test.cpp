@@ -54,7 +54,6 @@ int main()
     const size_t kGridY = grid_size[1];
 
     RimguideInfo info{};
-    info.radius = kRadius;
     info.friction_coeff = -friction_coeff;
     info.friction_delay = friction_delay;
     info.wave_speed = c;

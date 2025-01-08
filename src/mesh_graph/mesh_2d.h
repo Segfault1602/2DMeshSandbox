@@ -46,6 +46,8 @@ class Mesh2D
      */
     virtual Mat2D<uint8_t> get_mask_for_radius(float radius) const;
 
+    virtual Mat2D<uint8_t> get_mask_for_rect(float length, float width) const;
+
     /**
      * @brief Initializes the mesh with a given mask.
      * @param mask The mask to initialize the mesh with.

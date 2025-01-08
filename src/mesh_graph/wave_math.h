@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <utility>
 
 /**
  * Calculates the wave propagation speed in a material
@@ -27,6 +28,9 @@ float get_sample_distance(float wave_speed, float sample_rate);
  * @return Maximum radius
  */
 float get_max_radius(float radius, float friction_delay, float sample_distance, float min_delay = 1.5f);
+
+std::pair<float, float> get_max_dimensions(float length, float width, float friction_delay, float sample_distance,
+                                           float min_delay);
 
 /**
  * Calculates the fundamental frequency of the mesh
@@ -56,3 +60,5 @@ float get_friction_coeff(float radius, float wave_speed, float decay_rate, float
 float get_friction_delay(float friction_coeff, float fund_freq);
 
 std::array<size_t, 2> get_grid_size(float radius, float sample_distance, float vertical_scaler = 1);
+
+std::array<size_t, 2> get_grid_size_for_rect(float length, float width, float sample_distance, float vertical_scaler);

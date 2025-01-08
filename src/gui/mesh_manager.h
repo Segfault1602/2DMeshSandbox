@@ -5,6 +5,25 @@
 
 using RenderCompleteCallback = std::function<void()>;
 
+/**
+ * @brief Enum class for mesh type.
+ */
+enum class MeshType
+{
+    TRIANGULAR_MESH,
+    RECTILINEAR_MESH
+};
+
+/**
+ * @brief Enum class for excitation type.
+ */
+enum class ExcitationType
+{
+    RAISE_COSINE,
+    DIRAC,
+    FILE,
+};
+
 class MeshManager
 {
   public:

@@ -147,7 +147,9 @@ int main()
     ImVec4 clear_color = ImVec4(0.f, 0.f, 0.f, 1.00f);
 
     std::unique_ptr<AudioManager> audio_manager = AudioManager::CreateAudioManager();
+
     audio_manager->StartAudioStream();
+    MeshShape mesh_shape = MeshShape::Circle;
     init_mesh_gui();
 
     bool show_audio_config_window = false;
@@ -231,6 +233,23 @@ int main()
 
                 ImGui::MenuItem("Audio Menu", nullptr, &show_audio_config_window);
                 ImGui::Separator();
+
+                if (ImGui::BeginMenu("Mesh Shape"))
+                {
+                    static int shape_type = 0;
+                    bool pressed = false;
+                    pressed |= ImGui::RadioButton("Circular", &shape_type, 0);
+                    pressed |= ImGui::RadioButton("Rectangular", &shape_type, 1);
+
+                    mesh_shape = static_cast<MeshShape>(shape_type);
+
+                    if (pressed)
+                    {
+                        change_mesh_shape(mesh_shape);
+                    }
+
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();

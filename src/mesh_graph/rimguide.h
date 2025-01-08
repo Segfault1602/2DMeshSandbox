@@ -9,6 +9,8 @@
 #include <Noise.h>
 #include <OnePole.h>
 #include <PoleZero.h>
+
+#include <functional>
 #include <memory>
 
 class Junction;
@@ -16,7 +18,6 @@ class Junction;
 /// @brief Configuration parameters for a rim guide waveguide
 struct RimguideInfo
 {
-    float radius;                        ///< Radius of the rim guide
     float friction_coeff;                ///< Friction coefficient for damping
     float friction_delay;                ///< Delay time for friction effects
     float wave_speed;                    ///< Speed of wave propagation
@@ -31,7 +32,16 @@ struct RimguideInfo
     float nonlinear_allpass_coeffs[2];   ///< Coefficients for nonlinear allpass
     bool use_extra_diffusion_filters;    ///< Enable extra diffusion filters
     std::vector<float> diffusion_coeffs; ///< Coefficients for diffusion filters
+    std::function<Vec2Df(Vec2Df)> get_rimguide_pos; ///< Function to get the position of the rimguide
 };
+
+/// @brief Return the position on the boundary of a circle with the given radius based on the junction position
+/// @param junction_pos Position of the junction
+/// @param radius Radius of the circle
+/// @return Position on the boundary of the circle
+/// @note The position is found by drawing a line from the center of the circle to the junction position
+/// and scaling it to the radius of the circle
+Vec2Df get_boundary_position(float radius, const Vec2Df& junction_pos);
 
 /// @brief Implements a waveguide model for rim excitation simulation
 class Rimguide

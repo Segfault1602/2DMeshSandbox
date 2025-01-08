@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <utility>
 
 float get_wave_speed(float tension, float density)
 {
@@ -21,6 +22,18 @@ float get_max_radius(float radius, float friction_delay, float sample_distance, 
     min_delay = std::max(min_delay, 1.5f);
 
     return radius - ((min_delay + friction_delay) * sample_distance * 0.5f);
+}
+
+std::pair<float, float> get_max_dimensions(float length, float width, float friction_delay, float sample_distance,
+                                           float min_delay)
+{
+    min_delay = std::max(min_delay, 1.5f);
+
+    std::pair<float, float> max_dimensions;
+    std::get<0>(max_dimensions) = length - ((min_delay + friction_delay) * sample_distance);
+    std::get<1>(max_dimensions) = width - ((min_delay + friction_delay) * sample_distance);
+
+    return max_dimensions;
 }
 
 float get_fundamental_frequency(float radius, float wave_speed, float sample_rate)
@@ -52,6 +65,11 @@ float get_friction_coeff(float radius, float wave_speed, float decay_rate, float
 
 float get_friction_delay(float friction_coeff, float fund_freq)
 {
+    if (friction_coeff >= 0)
+    {
+        return 0;
+    }
+
     return (std::atan((-friction_coeff * std::sin(fund_freq)) / (friction_coeff * std::cos(fund_freq) + 1)) /
             fund_freq);
 }
@@ -61,6 +79,16 @@ std::array<size_t, 2> get_grid_size(float radius, float sample_distance, float v
     float radius_sample = radius / sample_distance;
     size_t x = static_cast<size_t>(std::ceil(radius_sample * 2));
     size_t y = static_cast<size_t>(std::ceil(radius_sample * 2 * vertical_scaler));
+
+    return {x, y};
+}
+
+std::array<size_t, 2> get_grid_size_for_rect(float length, float width, float sample_distance, float vertical_scaler)
+{
+    float length_sample = length / sample_distance;
+    float width_sample = width / sample_distance;
+    size_t x = static_cast<size_t>(std::ceil(length_sample));
+    size_t y = static_cast<size_t>(std::ceil(width_sample * vertical_scaler));
 
     return {x, y};
 }

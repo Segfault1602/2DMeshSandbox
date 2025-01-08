@@ -8,6 +8,7 @@
 #include "glm/detail/qualifier.hpp"
 #include "imgui.h"
 #include "implot.h"
+#include "rectangular_mesh_manager.h"
 
 #include <algorithm>
 #include <atomic>
@@ -61,7 +62,7 @@ SpectrogramInfo g_spectrogram_info{
 
 float render_time_sec = 1.f;
 
-std::unique_ptr<CircularMeshManager> g_mesh_manager;
+std::unique_ptr<MeshManager> g_mesh_manager;
 
 const std::vector<const char*> kCircularModes = {"(0,1)", "(1,1)", "(2,1)", "(0,2)", "(3,1)", "(1,2)",
                                                  "(4,1)", "(2,2)", "(0,3)", "(5,1)", "(3,2)", "(6,1)"};
@@ -187,6 +188,22 @@ void init_mesh_gui()
     for (int f = 0; f < g_spectrogram_info.num_freqs; ++f)
     {
         g_fft_frq[f] = f * (float)g_spectrogram_info.samplerate / (float)g_spectrogram_info.fft_size;
+    }
+}
+
+void change_mesh_shape(MeshShape shape)
+{
+    switch (shape)
+    {
+    case MeshShape::Circle:
+        g_mesh_manager = std::make_unique<CircularMeshManager>();
+        break;
+    case MeshShape::Rectangle:
+        g_mesh_manager = std::make_unique<RectangularMeshManager>();
+        break;
+    default:
+        g_mesh_manager = std::make_unique<CircularMeshManager>();
+        break;
     }
 }
 
@@ -510,16 +527,16 @@ void draw_spectrum()
             ImPlot::PopStyleColor();
         }
 
-        if (show_theoretical_modes)
-        {
-            for (size_t i = 0; i < kCircularModes.size(); ++i)
-            {
-                ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(75, 35, 0, 255));
-                float freq = kCircularRatios[i] * g_mesh_manager->current_fundamental_frequency();
-                ImPlot::PlotInfLines(std::format("Mode {}", i).c_str(), &freq, 1);
-                ImPlot::PopStyleColor();
-            }
-        }
+        // if (show_theoretical_modes)
+        // {
+        //     for (size_t i = 0; i < kCircularModes.size(); ++i)
+        //     {
+        //         ImPlot::PushStyleColor(ImPlotCol_Line, IM_COL32(75, 35, 0, 255));
+        //         float freq = kCircularRatios[i] * g_mesh_manager->current_fundamental_frequency();
+        //         ImPlot::PlotInfLines(std::format("Mode {}", i).c_str(), &freq, 1);
+        //         ImPlot::PopStyleColor();
+        //     }
+        // }
 
         ImPlot::EndPlot();
     }

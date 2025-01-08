@@ -1,4 +1,4 @@
-#include "circular_mesh_manager.h"
+#include "rectangular_mesh_manager.h"
 
 #include "gaussian.h"
 #include "junction.h"
@@ -43,41 +43,74 @@ float rand_float()
     return rn;
 }
 
-const std::vector<const char*> kCircularModes = {"(0,1)", "(1,1)", "(2,1)", "(0,2)", "(3,1)", "(1,2)",
-                                                 "(4,1)", "(2,2)", "(0,3)", "(5,1)", "(3,2)", "(6,1)"};
+float distance_between_point_and_line(Vec2Df P1, Vec2Df P2, Vec2Df P0)
+{
+    return std::abs((P2.y - P1.y) * P0.x - (P2.x - P1.x) * P0.y + P2.x * P1.y - P2.y * P1.x) /
+           std::sqrt((P2.y - P1.y) * (P2.y - P1.y) + (P2.x - P1.x) * (P2.x - P1.x));
+}
 
-const std::vector<float> kCircularRatios = {1.f,    1.594f, 2.136f, 2.296f, 2.653f, 2.918f,
-                                            3.156f, 3.501f, 3.600f, 3.652f, 4.060f, 4.154f};
+Vec2Df get_boundary_position_rect(float length, float width, const Vec2Df& junction_pos)
+{
+    std::array<float, 4> distances;
+    // north
+    distances[0] =
+        distance_between_point_and_line({-length / 2.f, width / 2.f}, {length / 2.f, width / 2.f}, junction_pos);
+    // south
+    distances[1] =
+        distance_between_point_and_line({-length / 2.f, -width / 2.f}, {length / 2.f, -width / 2.f}, junction_pos);
+    // east
+    distances[2] =
+        distance_between_point_and_line({length / 2.f, -width / 2.f}, {length / 2.f, width / 2.f}, junction_pos);
+    // west
+    distances[3] =
+        distance_between_point_and_line({-length / 2.f, -width / 2.f}, {-length / 2.f, width / 2.f}, junction_pos);
+
+    float min_dist_idx = std::distance(distances.begin(), std::min_element(distances.begin(), distances.end()));
+
+    switch (static_cast<int>(min_dist_idx))
+    {
+    case 0:
+        return {junction_pos.x, width / 2.f};
+    case 1:
+        return {junction_pos.x, -width / 2.f};
+    case 2:
+        return {length / 2.f, junction_pos.y};
+    case 3:
+        return {-length / 2.f, junction_pos.y};
+    default:
+        return {0, 0};
+    }
+    return {0, 0};
+}
 
 } // namespace
 
-CircularMeshManager::CircularMeshManager()
+RectangularMeshManager::RectangularMeshManager()
 {
     update_mesh_object();
 }
 
-CircularMeshManager::~CircularMeshManager() = default;
+RectangularMeshManager::~RectangularMeshManager() = default;
 
-void CircularMeshManager::compute_parameters()
+void RectangularMeshManager::compute_parameters()
 {
+    // TODO: This all needs to be updated for rectangular plates
+
     wave_speed_ = get_wave_speed(tension_, density_);
     sample_distance_ = get_sample_distance(wave_speed_, sample_rate_);
-    fundamental_frequency_ = get_fundamental_frequency(radius_, wave_speed_, sample_rate_);
 
-    if (!use_custom_cutoff_)
-    {
-        cutoff_freq_ = fundamental_frequency_;
-        cutoff_freq_hz_ = (fundamental_frequency_ * sample_rate_) / (2 * M_PI);
-    }
-    else
-    {
-        cutoff_freq_ = cutoff_freq_hz_ * 2 * M_PI / sample_rate_;
-    }
+    // TODO: for now, assume that the fundamental frequency is the same as a circular mesh
+    fundamental_frequency_ = get_fundamental_frequency(width_ / 2.f, wave_speed_, sample_rate_);
 
-    friction_coeff_ = get_friction_coeff(radius_, wave_speed_, decays_, cutoff_freq_);
+    friction_coeff_ = filter_pole_;
     friction_delay_ = get_friction_delay(
-        friction_coeff_, fundamental_frequency_); // Keep using the fundamental frequency for the delay calculation?
-    max_radius_ = get_max_radius(radius_, friction_delay_, sample_distance_, minimum_rimguide_delay_);
+        -friction_coeff_, fundamental_frequency_); // Keep using the fundamental frequency for the delay calculation?
+
+    auto max_dimensions =
+        get_max_dimensions(length_, width_, friction_delay_, sample_distance_, minimum_rimguide_delay_);
+
+    max_length_ = std::get<0>(max_dimensions);
+    max_width_ = std::get<1>(max_dimensions);
 
     float vertical_scaler = 1;
     switch (mesh_type_)
@@ -92,14 +125,14 @@ void CircularMeshManager::compute_parameters()
         break;
     }
 
-    auto grid_size = get_grid_size(max_radius_, sample_distance_, vertical_scaler);
+    auto grid_size = get_grid_size_for_rect(length_, width_, sample_distance_, vertical_scaler);
     grid_size_ = {static_cast<uint32_t>(grid_size[0]), static_cast<uint32_t>(grid_size[1])};
 
     // Put fundamental frequency in Hz
     fundamental_frequency_ = fundamental_frequency_ * sample_rate_ / (2 * M_PI);
 }
 
-void CircularMeshManager::update_mesh_object()
+void RectangularMeshManager::update_mesh_object()
 {
     compute_parameters();
     is_simulation_running_ = false;
@@ -118,7 +151,7 @@ void CircularMeshManager::update_mesh_object()
 
     RimguideInfo info = get_rimguide_info();
 
-    auto mask = mesh_->get_mask_for_radius(max_radius_);
+    auto mask = mesh_->get_mask_for_rect(max_length_, max_width_);
     mesh_->init(mask);
     mesh_->init_boundary(info);
 
@@ -132,10 +165,10 @@ void CircularMeshManager::update_mesh_object()
 
     update_gl_mesh();
     line_->set_color({1.f, 1.f, 1.f});
-    circle_line_->set_color({1.f, 0.2f, 0.2f});
+    boundary_line_->set_color({1.f, 0.2f, 0.2f});
 }
 
-void CircularMeshManager::draw_config_menu(bool& reset_camera)
+void RectangularMeshManager::draw_config_menu(bool& reset_camera)
 {
     ImGui::BeginDisabled(is_rendering_);
     bool config_changed = false;
@@ -163,23 +196,31 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
         sample_rate_ = 8000;
     }
 
-    ImGui::Text("Diameter (cm):");
+    ImGui::Text("Length (cm):");
     ImGui::SameLine(kColOffset);
-    static int diameter_cm = radius_ * 2 * 100;
-    config_changed |= ImGui::SliderInt("##radius", &diameter_cm, 1, 100);
-    radius_ = (diameter_cm / 2.f) / 100.f;
-
-    ImGui::Text("Decays:");
-    ImGui::SameLine(kColOffset);
-    config_changed |= ImGui::SliderFloat("##decays", &decays_, 0, 100);
-
-    ImGui::Checkbox("##cutoff_checkbox", &use_custom_cutoff_);
-    ImGui::BeginDisabled(!use_custom_cutoff_);
+    static bool locked = true;
+    ImGui::Checkbox("##lock", &locked);
+    static int length_cm = static_cast<int>(length_ * 100);
+    static int width_cm = static_cast<int>(width_ * 100);
     ImGui::SameLine();
-    ImGui::Text("Cutoff:");
-    ImGui::SameLine(kColOffset);
-    config_changed |= ImGui::SliderFloat("##cutoff", &cutoff_freq_hz_, 20, 2000);
+    ImGui::PushItemWidth(100);
+    config_changed |= ImGui::SliderInt("##length", &length_cm, 1, 100);
+    if (locked)
+    {
+        width_cm = length_cm;
+    }
+    ImGui::BeginDisabled(locked);
+    ImGui::SameLine();
+    config_changed |= ImGui::SliderInt("##width", &width_cm, 1, 100);
     ImGui::EndDisabled();
+    ImGui::PopItemWidth();
+
+    length_ = length_cm / 100.f;
+    width_ = width_cm / 100.f;
+
+    ImGui::Text("Filter Pole:");
+    ImGui::SameLine(kColOffset);
+    config_changed |= ImGui::SliderFloat("##pole", &filter_pole_, 0.f, 1.f, nullptr, ImGuiSliderFlags_Logarithmic);
 
     ImGui::Text("Density:");
     ImGui::SameLine(kColOffset);
@@ -293,9 +334,13 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     ImGui::SameLine(kColOffset2);
     ImGui::Text("%f s", friction_delay_);
 
-    ImGui::Text("Max Radius:");
+    ImGui::Text("Max Length:");
     ImGui::SameLine(kColOffset2);
-    ImGui::Text("%f m", max_radius_);
+    ImGui::Text("%f m", max_length_);
+
+    ImGui::Text("Max Width:");
+    ImGui::SameLine(kColOffset2);
+    ImGui::Text("%f m", max_width_);
 
     ImGui::Text("Grid Size:");
     ImGui::SameLine(kColOffset2);
@@ -316,14 +361,7 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
         ImGui::TableSetupColumn("Frequency (Hz)");
         ImGui::TableHeadersRow();
 
-        for (size_t i = 0; i < kCircularModes.size(); ++i)
-        {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", kCircularModes[i]);
-            ImGui::TableNextColumn();
-            ImGui::Text("%f", kCircularRatios[i] * fundamental_frequency_);
-        }
+        // TODO
 
         ImGui::EndTable();
     }
@@ -332,7 +370,7 @@ void CircularMeshManager::draw_config_menu(bool& reset_camera)
     draw_simulation_menu(reset_camera);
 }
 
-void CircularMeshManager::draw_experimental_config_menu()
+void RectangularMeshManager::draw_experimental_config_menu()
 {
     ImGui::BeginDisabled(is_rendering_);
     bool config_changed = false;
@@ -442,7 +480,7 @@ void CircularMeshManager::draw_experimental_config_menu()
     }
 }
 
-void CircularMeshManager::draw_simulation_menu(bool& reset_camera)
+void RectangularMeshManager::draw_simulation_menu(bool& reset_camera)
 {
     if (!mesh_)
     {
@@ -527,7 +565,7 @@ void CircularMeshManager::draw_simulation_menu(bool& reset_camera)
     update_gl_mesh();
 }
 
-void CircularMeshManager::render_async(float render_time_seconds, RenderCompleteCallback cb)
+void RectangularMeshManager::render_async(float render_time_seconds, RenderCompleteCallback cb)
 {
     if (is_rendering_)
     {
@@ -551,7 +589,7 @@ void CircularMeshManager::render_async(float render_time_seconds, RenderComplete
     }
 
     RimguideInfo info = get_rimguide_info();
-    auto mask = mesh->get_mask_for_radius(max_radius_);
+    auto mask = mesh->get_mask_for_rect(max_length_, max_width_);
     mesh->init(mask);
     mesh->init_boundary(info);
 
@@ -608,10 +646,10 @@ void CircularMeshManager::render_async(float render_time_seconds, RenderComplete
         }
     }
 
-    std::thread(&CircularMeshManager::render_async_worker, this, std::move(mesh), cb).detach();
+    std::thread(&RectangularMeshManager::render_async_worker, this, std::move(mesh), cb).detach();
 }
 
-void CircularMeshManager::render_async_worker(std::unique_ptr<Mesh2D>&& mesh, RenderCompleteCallback cb)
+void RectangularMeshManager::render_async_worker(std::unique_ptr<Mesh2D>&& mesh, RenderCompleteCallback cb)
 {
     const size_t out_size = render_time_seconds_ * sample_rate_;
     std::vector<float> out_buffer(out_size);
@@ -724,33 +762,33 @@ void CircularMeshManager::render_async_worker(std::unique_ptr<Mesh2D>&& mesh, Re
     }
 }
 
-float CircularMeshManager::get_progress() const
+float RectangularMeshManager::get_progress() const
 {
     return progress_;
 }
 
-bool CircularMeshManager::is_rendering() const
+bool RectangularMeshManager::is_rendering() const
 {
     return is_rendering_;
 }
 
-float CircularMeshManager::get_render_runtime() const
+float RectangularMeshManager::get_render_runtime() const
 {
     return render_runtime_;
 }
 
-void CircularMeshManager::plot_mesh() const
+void RectangularMeshManager::plot_mesh() const
 {
     static bool plot_connections = false;
-    static bool plot_radius = false;
+    static bool plot_boundary = false;
 
     ImGui::Text("Plot Connections:");
     ImGui::SameLine();
     ImGui::Checkbox("##Plot Connections", &plot_connections);
     ImGui::SameLine();
-    ImGui::Text("Plot Radius:");
+    ImGui::Text("Plot Boundary:");
     ImGui::SameLine();
-    ImGui::Checkbox("##Plot Radius", &plot_radius);
+    ImGui::Checkbox("##Plot Boundary", &plot_boundary);
 
     if (!mesh_)
     {
@@ -811,12 +849,19 @@ void CircularMeshManager::plot_mesh() const
 
         for (const auto& j : mesh_->junctions_.container())
         {
-            if (j.get_type() == 0)
-            {
-                continue;
-            }
             auto pos = j.get_pos();
 
+            if (j.get_type() == 0)
+            {
+                // ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, marker_size);
+                // ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Asterisk);
+
+                // ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(255, 255, 0, 255));
+                // ImPlot::PlotScatter("##junctions", &pos.x, &pos.y, 1);
+                // ImPlot::PopStyleColor();
+                // ImPlot::PopStyleVar(2);
+                continue;
+            }
             ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, marker_size);
             ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
 
@@ -828,7 +873,7 @@ void CircularMeshManager::plot_mesh() const
             if (j.has_rimguide())
             {
                 ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(15, 205, 247, 255));
-                ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, marker_size);
+                ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, marker_size / 2.f);
                 ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
 
                 auto rimguide_pos = j.get_rimguide()->get_pos();
@@ -862,21 +907,19 @@ void CircularMeshManager::plot_mesh() const
         }
         ImPlot::PopStyleVar(2);
 
-        if (plot_radius)
+        if (plot_boundary)
         {
-            ImVec2 cntr = ImPlot::PlotToPixels(ImPlotPoint(0.f, 0.f));
-            float radius = ImPlot::PlotToPixels(ImPlotPoint(max_radius_, 0.f)).x - cntr.x;
-            float real_radius = ImPlot::PlotToPixels(ImPlotPoint(radius_, 0.f)).x - cntr.x;
+            ImVec2 pmin = ImPlot::PlotToPixels(ImPlotPoint(-length_ / 2.f, width_ / 2.f));
+            ImVec2 pmax = ImPlot::PlotToPixels(ImPlotPoint(length_ / 2.f, -width_ / 2.f));
             ImPlot::PushPlotClipRect();
-            ImPlot::GetPlotDrawList()->AddCircle(cntr, radius, IM_COL32(255, 0, 0, 255), 100);
-            ImPlot::GetPlotDrawList()->AddCircle(cntr, real_radius, IM_COL32(255, 255, 255, 255), 100);
+            ImPlot::GetPlotDrawList()->AddRect(pmin, pmax, IM_COL32(255, 255, 255, 255));
             ImPlot::PopPlotClipRect();
         }
         ImPlot::EndPlot();
     }
 }
 
-void CircularMeshManager::render_gl_mesh(glm::mat4 mvp) const
+void RectangularMeshManager::render_gl_mesh(glm::mat4 mvp) const
 {
     if (!mesh_)
     {
@@ -891,16 +934,16 @@ void CircularMeshManager::render_gl_mesh(glm::mat4 mvp) const
     line_->set_mvp(mvp);
     line_->draw();
 
-    circle_line_->set_mvp(mvp);
-    circle_line_->draw();
+    boundary_line_->set_mvp(mvp);
+    boundary_line_->draw();
 }
 
-float CircularMeshManager::current_fundamental_frequency() const
+float RectangularMeshManager::current_fundamental_frequency() const
 {
     return fundamental_frequency_;
 }
 
-void CircularMeshManager::update_gl_mesh()
+void RectangularMeshManager::update_gl_mesh()
 {
     std::vector<glm::vec3> start_points;
     std::vector<glm::vec3> end_points;
@@ -974,30 +1017,34 @@ void CircularMeshManager::update_gl_mesh()
 
     start_points.clear();
     end_points.clear();
-    constexpr float kCircleRes = 50.f;
-    for (size_t i = 0; i < kCircleRes; i++)
-    {
-        float angle = 2.f * M_PI * i / kCircleRes;
-        float x = radius_ * cos(angle);
-        float y = radius_ * sin(angle);
-        start_points.emplace_back(x, y, 0.f);
 
-        float next_x = radius_ * cos(2.f * M_PI * (i + 1) / kCircleRes);
-        float next_y = radius_ * sin(2.f * M_PI * (i + 1) / kCircleRes);
-        end_points.emplace_back(next_x, next_y, 0.f);
-    }
+    // Top left corner
+    start_points.emplace_back(-length_ / 2.f, width_ / 2.f, 0.f);
+    end_points.emplace_back(length_ / 2.f, width_ / 2.f, 0.f);
 
-    if (!circle_line_)
+    // Top right corner
+    start_points.emplace_back(length_ / 2.f, width_ / 2.f, 0.f);
+    end_points.emplace_back(length_ / 2.f, -width_ / 2.f, 0.f);
+
+    // Bottom right corner
+    start_points.emplace_back(length_ / 2.f, -width_ / 2.f, 0.f);
+    end_points.emplace_back(-length_ / 2.f, -width_ / 2.f, 0.f);
+
+    // Bottom left corner
+    start_points.emplace_back(-length_ / 2.f, -width_ / 2.f, 0.f);
+    end_points.emplace_back(-length_ / 2.f, width_ / 2.f, 0.f);
+
+    if (!boundary_line_)
     {
-        circle_line_ = std::make_unique<Line>(start_points, end_points);
+        boundary_line_ = std::make_unique<Line>(start_points, end_points);
     }
-    circle_line_->update(start_points, end_points);
+    boundary_line_->update(start_points, end_points);
 }
 
-RimguideInfo CircularMeshManager::get_rimguide_info() const
+RimguideInfo RectangularMeshManager::get_rimguide_info() const
 {
     RimguideInfo info{};
-    info.friction_coeff = -friction_coeff_;
+    info.friction_coeff = friction_coeff_;
     info.friction_delay = friction_delay_;
     info.wave_speed = wave_speed_;
     info.sample_rate = sample_rate_;
@@ -1013,7 +1060,7 @@ RimguideInfo CircularMeshManager::get_rimguide_info() const
     info.use_extra_diffusion_filters = use_extra_diffusion_filters_;
     info.diffusion_coeffs = diffusion_filter_coeffs_;
 
-    info.get_rimguide_pos = std::bind(get_boundary_position, radius_, std::placeholders::_1);
+    info.get_rimguide_pos = std::bind(get_boundary_position_rect, length_, width_, std::placeholders::_1);
 
     return info;
 }

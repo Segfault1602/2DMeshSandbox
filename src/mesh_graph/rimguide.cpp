@@ -17,20 +17,15 @@ namespace
 
 constexpr float kPitchBendScaler = 100.f;
 
-/// @brief Return the position on the boundary of a circle with the given radius based on the junction position
-/// @param junction_pos Position of the junction
-/// @param radius Radius of the circle
-/// @return Position on the boundary of the circle
-/// @note The position is found by drawing a line from the center of the circle to the junction position
-/// and scaling it to the radius of the circle
-Vec2Df get_boundary_position(const Vec2Df& junction_pos, float radius)
+} // namespace
+
+Vec2Df get_boundary_position(float radius, const Vec2Df& junction_pos)
 {
     float dist_2_center = get_distance({0, 0}, junction_pos);
     float x_unit = junction_pos.x / dist_2_center;
     float y_unit = junction_pos.y / dist_2_center;
     return {x_unit * radius, y_unit * radius};
 }
-} // namespace
 
 Rimguide::Rimguide()
     : junction_(nullptr)
@@ -63,7 +58,7 @@ void Rimguide::init(const RimguideInfo& info, Junction* junction)
 {
     junction_ = junction;
 
-    pos_ = get_boundary_position(junction_->get_pos(), info.radius);
+    pos_ = info.get_rimguide_pos(junction->get_pos());
 
     float distance_2_junction = get_distance(pos_, junction_->get_pos());
     float sample_distance = info.sample_rate / info.wave_speed;
