@@ -54,7 +54,6 @@ int main()
     const size_t kGridY = grid_size[1];
 
     RimguideInfo info{};
-    info.radius = kRadius;
     info.friction_coeff = -friction_coeff;
     info.friction_delay = friction_delay;
     info.wave_speed = c;
@@ -65,6 +64,7 @@ int main()
     info.use_nonlinear_allpass = false;
     info.nonlinear_allpass_coeffs[0] = 0.5f;
     info.nonlinear_allpass_coeffs[1] = 0.1f;
+    info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
     TriMesh mesh(kGridX, kGridY, sample_distance);
     auto mask = mesh.get_mask_for_radius(max_radius);

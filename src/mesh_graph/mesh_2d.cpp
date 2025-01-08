@@ -9,6 +9,14 @@
 
 #define IDX(x, y) ((x) + (y) * lx_)
 
+namespace
+{
+bool is_within_rect(float x, float y, float length, float width)
+{
+    return x >= -length / 2.f && x <= length / 2.f && y >= -width / 2.f && y <= width / 2.f;
+}
+} // namespace
+
 Mesh2D::Mesh2D()
     : input_x(0)
     , input_y(0)
@@ -51,6 +59,22 @@ Mat2D<uint8_t> Mesh2D::get_mask_for_radius(float radius) const
     return mask;
 }
 
+Mat2D<uint8_t> Mesh2D::get_mask_for_rect(float length, float width) const
+{
+    Mat2D<uint8_t> mask;
+    mask.allocate(lx_, ly_);
+
+    for (size_t y = 0; y < ly_; ++y)
+    {
+        for (size_t x = 0; x < lx_; ++x)
+        {
+            const auto pos = junctions_(x, y).get_pos();
+            mask(x, y) = is_within_rect(pos.x, pos.y, length, width) ? 1 : 0;
+        }
+    }
+    return mask;
+}
+
 void Mesh2D::init_boundary(const RimguideInfo& info)
 {
     sample_rate_ = info.sample_rate;
@@ -62,6 +86,14 @@ void Mesh2D::init_boundary(const RimguideInfo& info)
             rimguides_.push_back(j.get_rimguide());
         }
     }
+
+    // Sort rimguides by their angle.
+    // Not strictly necessary, but helpful when iterating over them.
+    std::sort(rimguides_.begin(), rimguides_.end(), [](const Rimguide* a, const Rimguide* b) {
+        float angle_a = std::atan2(a->get_pos().y, a->get_pos().x);
+        float angle_b = std::atan2(b->get_pos().y, b->get_pos().x);
+        return angle_a < angle_b;
+    });
 }
 
 size_t Mesh2D::get_samplerate() const

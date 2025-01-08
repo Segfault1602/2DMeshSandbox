@@ -13,20 +13,20 @@
 #include <memory>
 
 /**
- * @brief Manages the circular mesh for rendering and simulation.
+ * @brief Manages the rectangular mesh for rendering and simulation.
  */
-class CircularMeshManager : public MeshManager
+class RectangularMeshManager : public MeshManager
 {
   public:
     /**
-     * @brief Constructs a new CircularMeshManager object.
+     * @brief Constructs a new RectangularMeshManager object.
      */
-    CircularMeshManager();
+    RectangularMeshManager();
 
     /**
-     * @brief Destroys the CircularMeshManager object.
+     * @brief Destroys the RectangularMeshManager object.
      */
-    ~CircularMeshManager() override;
+    ~RectangularMeshManager() override;
 
     /**
      * @brief Draws the configuration menu.
@@ -83,16 +83,13 @@ class CircularMeshManager : public MeshManager
 
     RimguideInfo get_rimguide_info() const;
 
-    MeshType mesh_type_ = MeshType::TRIANGULAR_MESH; ///< Type of the mesh.
-    std::unique_ptr<Mesh2D> mesh_{nullptr};          ///< Pointer to the mesh object.
-    Listener listener_;                              ///< Listener for events.
+    MeshType mesh_type_ = MeshType::RECTILINEAR_MESH; ///< Type of the mesh.
+    std::unique_ptr<Mesh2D> mesh_{nullptr};           ///< Pointer to the mesh object.
 
     // Model parameters
-    float radius_ = 0.32;                 ///< Radius of the circular mesh.
-    float decays_ = 25.f;                 ///< Decay factor for the simulation.
-    bool use_custom_cutoff_ = false;      ///< Flag to use custom cutoff frequency.
-    float cutoff_freq_ = 0.f;             ///< Custom cutoff frequency.
-    float cutoff_freq_hz_ = 1000.f;       ///< Cutoff frequency in Hz.
+    float length_ = 0.64;                 ///< Length of the rectangular mesh.
+    float width_ = 0.64;                  ///< Width of the rectangular mesh.
+    float filter_pole_ = 0.6f;            ///< Pole for the filter.
     float density_ = 0.262;               ///< Density of the mesh material.
     int32_t tension_ = 3325.f;            ///< Tension of the mesh.
     float minimum_rimguide_delay_ = 1.5f; ///< Minimum delay for the rim guide.
@@ -109,7 +106,8 @@ class CircularMeshManager : public MeshManager
     float fundamental_frequency_ = 0; ///< Fundamental frequency of the mesh.
     float friction_coeff_ = 0.f;      ///< Friction coefficient.
     float friction_delay_ = 0.f;      ///< Friction delay.
-    float max_radius_ = 0.f;          ///< Maximum radius of the mesh.
+    float max_length_ = 0.0f;         ///< Maximum length of the rectangular mesh.
+    float max_width_ = 0.0f;          ///< Maximum width of the rectangular mesh.
     Vec2Di grid_size_ = {0, 0};       ///< Size of the grid.
 
     enum class TimeVaryingAllpassType
@@ -144,6 +142,6 @@ class CircularMeshManager : public MeshManager
     size_t diffusion_filter_count_ = 0;
     std::vector<float> diffusion_filter_coeffs_;
 
-    std::unique_ptr<Line> line_ = nullptr;        ///< Pointer to the line object.
-    std::unique_ptr<Line> circle_line_ = nullptr; ///< Pointer to the circular line object.
+    std::unique_ptr<Line> line_ = nullptr;          ///< Pointer to the line object.
+    std::unique_ptr<Line> boundary_line_ = nullptr; ///< Pointer to the rectangular line object.
 };

@@ -1,7 +1,9 @@
 set(GUI_SOURCE
     audio_gui.cpp
     mesh_gui.cpp
+    mesh_manager.cpp
     circular_mesh_manager.cpp
+    rectangular_mesh_manager.cpp
     )
 
 add_library(mesh2dgui STATIC ${GUI_SOURCE})

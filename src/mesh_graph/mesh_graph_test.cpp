@@ -2,6 +2,7 @@
 #include "gaussian.h"
 #include "rectilinear_mesh.h"
 #include "rimguide.h"
+#include "rimguide_utils.h"
 #include "wave_math.h"
 
 #include <array>
@@ -56,12 +57,12 @@ std::vector<float> render(float tension, float density, float radius)
     const size_t kGridY = grid_size[1];
 
     RimguideInfo info{};
-    info.radius = kRadius;
     info.friction_coeff = -friction_coeff;
     info.friction_delay = friction_delay;
     info.wave_speed = c;
     info.sample_rate = kSampleRate;
     info.is_solid_boundary = true;
+    info.get_rimguide_pos = std::bind(get_boundary_position, kRadius, std::placeholders::_1);
 
     std::vector<float> out_buffer(kOutputSize, 0.0f);
     out_buffer.reserve(kOutputSize);

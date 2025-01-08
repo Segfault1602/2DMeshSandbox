@@ -4,6 +4,7 @@ set(MESH_SOURCE
     trimesh.cpp
     wave_math.cpp
     rimguide.cpp
+    rimguide_utils.cpp
     mesh_2d.cpp
     listener.cpp
     allpass.cpp
