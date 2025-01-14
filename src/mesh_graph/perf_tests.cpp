@@ -65,7 +65,7 @@ TEST_CASE("TriMesh")
     mesh.init(mask);
     mesh.init_boundary(info);
 
-    mesh.set_input(0.5, 0.5);
+    mesh.set_input(0.1f, {0.f, 0.f});
     mesh.set_output(0.5, 0.5);
 
     auto impulse = raised_cosine(100, kSampleRate);
@@ -95,7 +95,7 @@ TEST_CASE("TriMesh")
     mask = trimesh_mt.get_mask_for_radius(max_radius);
     trimesh_mt.init(mask);
     trimesh_mt.init_boundary(info);
-    trimesh_mt.set_input(0.5, 0.5);
+    trimesh_mt.set_input(0.1f, {0.f, 0.f});
     trimesh_mt.set_output(0.5, 0.5);
 
     bench.run("Trimesh - Multi Thread", [&] {
@@ -138,7 +138,7 @@ TEST_CASE("Rectangular mesh")
     auto mask = rect_mesh.get_mask_for_radius(max_radius);
     rect_mesh.init(mask);
     rect_mesh.init_boundary(info);
-    rect_mesh.set_input(0.5, 0.5);
+    rect_mesh.set_input(0.1f, {0.f, 0.f});
     rect_mesh.set_output(0.5, 0.5);
 
     auto impulse = raised_cosine(100, kSampleRate);
@@ -168,7 +168,7 @@ TEST_CASE("Rectangular mesh")
     mask = rect_mesh_mt.get_mask_for_radius(max_radius);
     rect_mesh_mt.init(mask);
     rect_mesh_mt.init_boundary(info);
-    rect_mesh_mt.set_input(0.5, 0.5);
+    rect_mesh_mt.set_input(0.1f, {0.f, 0.f});
     rect_mesh_mt.set_output(0.5, 0.5);
 
     bench.run("RectMesh - Multi Thread", [&] {
@@ -222,7 +222,7 @@ TEST_CASE("TriMesh single thread- BigO")
         mesh.init(mask);
         mesh.init_boundary(info);
 
-        mesh.set_input(0.5, 0.5);
+        mesh.set_input(0.1f, {0.f, 0.f});
         mesh.set_output(0.5, 0.5);
 
         auto total_grid_size = kGridX * kGridY;
@@ -283,7 +283,7 @@ TEST_CASE("TriMesh multi thread- BigO")
         mesh.init(mask);
         mesh.init_boundary(info);
 
-        mesh.set_input(0.5, 0.5);
+        mesh.set_input(0.1f, {0.f, 0.f});
         mesh.set_output(0.5, 0.5);
 
         auto total_grid_size = kGridX * kGridY;

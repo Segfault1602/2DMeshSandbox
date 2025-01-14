@@ -81,11 +81,12 @@ class Mesh2D
     virtual float get_energy() const;
 
     /**
-     * @brief Sets the input position.
-     * @param x The x-coordinate of the input. A value between 0 and 1.
-     * @param y The y-coordinate of the input. A value between 0 and 1.
+     * @brief Set the input zone
+     *
+     * @param radius The radius of the input zone
+     * @param center The center of the input zone
      */
-    virtual void set_input(float x, float y);
+    virtual void set_input(float radius, Vec2Df center);
 
     /**
      * @brief Sets the output position.
@@ -124,10 +125,10 @@ class Mesh2D
     virtual float tick_mt(float input);
 
     /**
-     * @brief Gets the input position.
-     * @return The input position as a 2D vector.
+     * @brief Gets the input junctions.
+     * @return A vector of pointers to the input junctions.
      */
-    virtual Vec2Df get_input_pos() const;
+    virtual std::vector<Junction*> get_inputs() const;
 
     /**
      * @brief Gets the output position.
@@ -183,6 +184,8 @@ class Mesh2D
     size_t input_y;
     size_t output_x;
     size_t output_y;
+
+    std::vector<Junction*> inputs_;
 
     //  Non-owning pointers to rimguides for convenience
     std::vector<Rimguide*> rimguides_;

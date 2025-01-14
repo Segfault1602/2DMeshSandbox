@@ -112,13 +112,21 @@ float Mesh2D::get_energy() const
     return e;
 }
 
-void Mesh2D::set_input(float x, float y)
+void Mesh2D::set_input(float radius, Vec2Df center)
 {
-    x = std::clamp(x, 0.f, 1.f);
-    y = std::clamp(y, 0.f, 1.f);
-
-    input_x = static_cast<size_t>(x * lx_);
-    input_y = static_cast<size_t>(y * ly_);
+    inputs_.clear();
+    for (size_t y = 0; y < ly_; ++y)
+    {
+        for (size_t x = 0; x < lx_; ++x)
+        {
+            const auto pos = junctions_(x, y).get_pos();
+            const float dist = get_distance(center, pos);
+            if (dist <= radius)
+            {
+                inputs_.push_back(&junctions_(x, y));
+            }
+        }
+    }
 }
 
 void Mesh2D::set_output(float x, float y)
@@ -143,6 +151,11 @@ float Mesh2D::tick(float input)
     // Found experimentally, this is the cutoff point where the multi-threaded version becomes faster
     constexpr size_t kGridSizeCutOff = 2000;
 
+    for (auto& j : inputs_)
+    {
+        j->add_input(input);
+    }
+
     if (junctions_.size() < kGridSizeCutOff)
     {
         return tick_st(input);
@@ -153,8 +166,6 @@ float Mesh2D::tick(float input)
 
 float Mesh2D::tick_st(float input)
 {
-    junctions_(input_x, input_y).add_input(input);
-
     for (auto& j : junctions_.container())
     {
         if (j.get_type() != 0)
@@ -200,8 +211,6 @@ void Mesh2D::process_delay_mt(size_t start, size_t end)
 
 float Mesh2D::tick_mt(float input)
 {
-    junctions_(input_x, input_y).add_input(input);
-
     const uint32_t n_threads = threadpool_.get_num_threads();
     std::vector<std::function<void()>> scatter_tasks;
     for (uint32_t i = 0; i < n_threads; ++i)
@@ -228,9 +237,9 @@ float Mesh2D::tick_mt(float input)
     return junctions_(output_x, output_y).get_output();
 }
 
-Vec2Df Mesh2D::get_input_pos() const
+std::vector<Junction*> Mesh2D::get_inputs() const
 {
-    return junctions_(input_x, input_y).get_pos();
+    return inputs_;
 }
 
 Vec2Df Mesh2D::get_output_pos() const

@@ -116,7 +116,8 @@ void RectangularMeshManager::update_mesh_object()
     mesh_->init(mask);
     mesh_->init_boundary(info);
 
-    mesh_->set_input(input_pos_.x, input_pos_.y);
+    Vec2Df input_center = {input_pos_.x / 100.f, input_pos_.y / 100.f};
+    mesh_->set_input(input_radius_ / 100.f, input_center);
     mesh_->set_output(output_pos_.x, output_pos_.y);
 
     if (clamp_center_)
@@ -197,7 +198,12 @@ void RectangularMeshManager::draw_config_menu(bool& reset_camera)
 
     ImGui::Text("Input Pos:");
     ImGui::SameLine(kColOffset);
-    config_changed |= ImGui::SliderFloat2("##input_pos", &input_pos_.x, 0.f, 1.f);
+    config_changed |= ImGui::SliderFloat2("##input_pos", &input_pos_.x, -std::min(length_cm, width_cm) / 2.f,
+                                          std::min(length_cm, width_cm) / 2.f);
+
+    ImGui::Text("Input Radius:");
+    ImGui::SameLine(kColOffset);
+    config_changed |= ImGui::SliderFloat("##input_radius", &input_radius_, 0.f, 0.25f * std::min(length_cm, width_cm));
 
     ImGui::Text("Clamped bound.:");
     ImGui::SameLine(kColOffset);
@@ -559,7 +565,8 @@ void RectangularMeshManager::render_async(float render_time_seconds, RenderCompl
         mesh->clamp_center_with_rimguide();
     }
 
-    mesh->set_input(input_pos_.x, input_pos_.y);
+    Vec2Df input_center = {input_pos_.x / 100.f, input_pos_.y / 100.f};
+    mesh->set_input(input_radius_ / 100.f, input_center);
     mesh->set_output(output_pos_.x, output_pos_.y);
 
     if (use_time_varying_allpass_)
@@ -724,12 +731,16 @@ void RectangularMeshManager::plot_mesh() const
         }
 
         // Plot input
-        auto input_pos = mesh_->get_input_pos();
+        auto input_pos = mesh_->get_inputs();
         auto output_pos = mesh_->get_output_pos();
         ImPlot::PushStyleVar(ImPlotStyleVar_MarkerSize, marker_size);
         ImPlot::PushStyleVar(ImPlotStyleVar_Marker, ImPlotMarker_Circle);
         ImPlot::PushStyleColor(ImPlotCol_MarkerOutline, IM_COL32(255, 50, 50, 255));
-        ImPlot::PlotScatter("##input", &input_pos.x, &input_pos.y, 1);
+        for (const auto& input_junction : input_pos)
+        {
+            auto pos = input_junction->get_pos();
+            ImPlot::PlotScatter("##input", &pos.x, &pos.y, 1);
+        }
         ImPlot::PopStyleColor();
 
         if (listener_type_ == ListenerType::POINT)

@@ -73,7 +73,7 @@ std::vector<float> render(float tension, float density, float radius)
     mesh_graph.init(mask);
     mesh_graph.init_boundary(info);
 
-    mesh_graph.set_input(0.5f, 0.5f);
+    mesh_graph.set_input(0.1, {0.f, 0.f});
     mesh_graph.set_output(0.5f, 0.5f);
     mesh_graph.set_absorption_coeff(0.9f);
 

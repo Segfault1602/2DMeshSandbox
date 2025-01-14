@@ -95,6 +95,7 @@ class RectangularMeshManager : public MeshManager
     float minimum_rimguide_delay_ = 1.5f; ///< Minimum delay for the rim guide.
     bool is_solid_boundary_ = true;       ///< Flag indicating if the boundary is solid.
     Vec2Df input_pos_ = {0.5f, 0.5f};     ///< Input position on the mesh.
+    float input_radius_ = 1.f;            ///< Input radius on the mesh.
     Vec2Df output_pos_ = {0.5f, 0.5f};    ///< Output position on the mesh.
 
     bool is_simulation_running_ = false; ///< Flag indicating if the simulation is running.

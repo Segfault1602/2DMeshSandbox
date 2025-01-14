@@ -72,7 +72,7 @@ int main()
     mesh.init(mask);
     mesh.init_boundary(info);
 
-    mesh.set_input(0.25, 0.5);
+    mesh.set_input(0.1f, {0.f, 0.f});
     mesh.set_output(0.5, 0.5);
 
     float T = 1.f / kSampleRate;
